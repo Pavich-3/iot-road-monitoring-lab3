@@ -45,6 +45,23 @@ services:
     networks:
       - db_network
 
+  grafana:
+    image: grafana/grafana:11.1.0
+    container_name: grafana
+    depends_on:
+      - postgres_db
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    networks:
+      - db_network
+
   edge:
     container_name: edge
     build: ../
@@ -118,3 +135,4 @@ networks:
 volumes:
   postgres_data:
   pgadmin-data:
+  grafana-data:
