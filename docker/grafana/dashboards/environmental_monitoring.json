@@ -28,44 +28,27 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "thresholds"
+            "mode": "palette-classic"
           },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "orange",
-                "value": 10
-              }
-            ]
-          },
-          "unit": "kwatt"
+          "unit": "celsius"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
-        "w": 6,
+        "h": 8,
+        "w": 12,
         "x": 0,
         "y": 0
       },
       "id": 1,
       "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "center",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
         },
-        "textMode": "auto"
+        "tooltip": {
+          "mode": "single"
+        }
       },
       "targets": [
         {
@@ -73,75 +56,14 @@
             "type": "postgres",
             "uid": "postgres-road-monitoring"
           },
-          "format": "table",
+          "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT ROUND(AVG((payload ->> 'power_kw')::numeric), 2) AS average_power_kw\nFROM sensor_readings\nWHERE sensor_type = 'smart_grid'\n  AND $__timeFilter(received_at);",
+          "rawSql": "SELECT\n  date_trunc('minute', created_at) AS time,\n  AVG((payload ->> 'temperature_c')::numeric) AS temperature_c\nFROM sensor_readings\nWHERE sensor_type = 'environmental'\n  AND $__timeFilter(created_at)\nGROUP BY time\nORDER BY time;",
           "refId": "A"
         }
       ],
-      "title": "Average Power Usage",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "postgres",
-        "uid": "postgres-road-monitoring"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              },
-              {
-                "color": "orange",
-                "value": 10
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 7,
-        "w": 6,
-        "x": 6,
-        "y": 0
-      },
-      "id": 2,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "center",
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "auto"
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "postgres",
-            "uid": "postgres-road-monitoring"
-          },
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT COUNT(*) AS energy_readings_count\nFROM sensor_readings\nWHERE sensor_type = 'smart_grid'\n  AND $__timeFilter(received_at);",
-          "refId": "A"
-        }
-      ],
-      "title": "Energy Readings Count",
-      "type": "stat"
+      "title": "Temperature C",
+      "type": "timeseries"
     },
     {
       "datasource": {
@@ -153,15 +75,60 @@
           "color": {
             "mode": "palette-classic"
           },
-          "unit": "volt"
+          "unit": "percent"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 7,
+        "h": 8,
         "w": 12,
         "x": 12,
         "y": 0
+      },
+      "id": 2,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "postgres",
+            "uid": "postgres-road-monitoring"
+          },
+          "format": "time_series",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  date_trunc('minute', created_at) AS time,\n  AVG((payload ->> 'humidity_pct')::numeric) AS humidity_percent\nFROM sensor_readings\nWHERE sensor_type = 'environmental'\n  AND $__timeFilter(created_at)\nGROUP BY time\nORDER BY time;",
+          "refId": "A"
+        }
+      ],
+      "title": "Humidity Percent",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "postgres",
+        "uid": "postgres-road-monitoring"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "unit": "ppm"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
       },
       "id": 3,
       "options": {
@@ -181,11 +148,11 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT\n  date_trunc('minute', created_at) AS time,\n  AVG((payload ->> 'voltage_v')::numeric) AS avg_voltage_v\nFROM sensor_readings\nWHERE sensor_type = 'smart_grid'\n  AND $__timeFilter(created_at)\nGROUP BY time\nORDER BY time;",
+          "rawSql": "SELECT\n  date_trunc('minute', created_at) AS time,\n  AVG((payload ->> 'co2_ppm')::numeric) AS co2_ppm\nFROM sensor_readings\nWHERE sensor_type = 'environmental'\n  AND $__timeFilter(created_at)\nGROUP BY time\nORDER BY time;",
           "refId": "A"
         }
       ],
-      "title": "Voltage over Time",
+      "title": "CO2 PPM",
       "type": "timeseries"
     },
     {
@@ -198,15 +165,15 @@
           "color": {
             "mode": "palette-classic"
           },
-          "unit": "amp"
+          "unit": "short"
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 9,
+        "h": 8,
         "w": 12,
-        "x": 0,
-        "y": 7
+        "x": 12,
+        "y": 8
       },
       "id": 4,
       "options": {
@@ -226,56 +193,11 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT\n  date_trunc('minute', created_at) AS time,\n  AVG((payload ->> 'current_a')::numeric) AS avg_current_a\nFROM sensor_readings\nWHERE sensor_type = 'smart_grid'\n  AND $__timeFilter(created_at)\nGROUP BY time\nORDER BY time;",
+          "rawSql": "SELECT\n  date_trunc('minute', created_at) AS time,\n  AVG(\n    CASE\n      WHEN (payload ->> 'pm2_5')::numeric <= 12 THEN 50\n      WHEN (payload ->> 'pm2_5')::numeric <= 35.4 THEN 100\n      WHEN (payload ->> 'pm2_5')::numeric <= 55.4 THEN 150\n      WHEN (payload ->> 'pm2_5')::numeric <= 150.4 THEN 200\n      ELSE 300\n    END\n  )::numeric AS air_quality_index\nFROM sensor_readings\nWHERE sensor_type = 'environmental'\n  AND $__timeFilter(created_at)\nGROUP BY time\nORDER BY time;",
           "refId": "A"
         }
       ],
-      "title": "Current over Time",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "postgres",
-        "uid": "postgres-road-monitoring"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "unit": "celsius"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 9,
-        "w": 12,
-        "x": 12,
-        "y": 7
-      },
-      "id": 5,
-      "options": {
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "single"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "postgres",
-            "uid": "postgres-road-monitoring"
-          },
-          "format": "time_series",
-          "rawQuery": true,
-          "rawSql": "SELECT\n  date_trunc('minute', created_at) AS time,\n  AVG((payload ->> 'transformer_temp_c')::numeric) AS avg_transformer_temp_c\nFROM sensor_readings\nWHERE sensor_type = 'smart_grid'\n  AND $__timeFilter(created_at)\nGROUP BY time\nORDER BY time;",
-          "refId": "A"
-        }
-      ],
-      "title": "Transformer Temperature",
+      "title": "Air Quality Index",
       "type": "timeseries"
     }
   ],
@@ -283,8 +205,8 @@
   "schemaVersion": 39,
   "style": "dark",
   "tags": [
-    "lab3",
-    "energy"
+    "environmental",
+    "lab3"
   ],
   "templating": {
     "list": []
@@ -295,8 +217,8 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Smart Energy Monitoring",
-  "uid": "smart-energy-monitoring",
+  "title": "Environmental Monitoring",
+  "uid": "environmental-monitoring",
   "version": 1,
   "weekStart": ""
 }

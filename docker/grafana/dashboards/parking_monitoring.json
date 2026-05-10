@@ -165,7 +165,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT $__timeGroupAlias(recorded_at, '1 minute'), COUNT(*) AS messages\nFROM sensor_readings\nWHERE $__timeFilter(recorded_at)\nGROUP BY 1\nORDER BY 1;",
+          "rawSql": "SELECT\n  date_trunc('minute', created_at) AS time,\n  COUNT(*)::numeric AS messages\nFROM sensor_readings\nWHERE $__timeFilter(created_at)\nGROUP BY time\nORDER BY time;",
           "refId": "A"
         }
       ],
@@ -278,7 +278,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT $__timeGroupAlias(recorded_at, '15 minute'),\n       COALESCE(area, sensor_id) AS metric,\n       AVG((payload ->> 'occupancy_rate')::numeric) * 100 AS occupancy_rate_pct\nFROM sensor_readings\nWHERE sensor_type = 'parking'\n  AND $__timeFilter(recorded_at)\nGROUP BY 1, 2\nORDER BY 1, 2;",
+          "rawSql": "SELECT\n  date_trunc('minute', created_at) AS time,\n  COALESCE(area, sensor_id) AS metric,\n  AVG((payload ->> 'occupancy_rate')::numeric) * 100 AS occupancy_rate_pct\nFROM sensor_readings\nWHERE sensor_type = 'parking'\n  AND $__timeFilter(created_at)\nGROUP BY time, metric\nORDER BY time, metric;",
           "refId": "A"
         }
       ],

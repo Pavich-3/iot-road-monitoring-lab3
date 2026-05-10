@@ -167,7 +167,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT $__timeGroupAlias(recorded_at, '1 minute'), COUNT(*) AS messages\nFROM sensor_readings\nWHERE $__timeFilter(recorded_at)\nGROUP BY 1\nORDER BY 1;",
+          "rawSql": "SELECT\n  date_trunc('minute', created_at) AS time,\n  COUNT(*)::numeric AS messages\nFROM sensor_readings\nWHERE $__timeFilter(created_at)\nGROUP BY time\nORDER BY time;",
           "refId": "A"
         }
       ],
@@ -377,7 +377,7 @@
           },
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT $__timeGroupAlias(recorded_at, '5 minute'),\n       AVG((payload ->> 'vehicle_count')::numeric) AS avg_vehicle_count\nFROM sensor_readings\nWHERE sensor_type = 'traffic_light'\n  AND $__timeFilter(recorded_at)\nGROUP BY 1\nORDER BY 1;",
+          "rawSql": "SELECT\n  date_trunc('minute', created_at) AS time,\n  AVG((payload ->> 'vehicle_count')::numeric) AS avg_vehicle_count\nFROM sensor_readings\nWHERE sensor_type = 'traffic_light'\n  AND $__timeFilter(created_at)\nGROUP BY time\nORDER BY time;",
           "refId": "A"
         }
       ],
