@@ -1,0 +1,120 @@
+version: "3.9"
+# name: "road_vision"
+services:
+  mqtt:
+    image: eclipse-mosquitto:2
+    container_name: mqtt
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+    ports:
+      - "1883:1883"
+      - "19001:9001"
+    networks:
+      - mqtt_network
+
+  postgres_db:
+    image: postgres:16
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: test_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/structure.sql:/docker-entrypoint-initdb.d/structure.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - db_network
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres_db
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    networks:
+      - db_network
+
+  edge:
+    container_name: edge
+    build: ../
+    depends_on:
+      - mqtt
+    environment:
+      MQTT_BROKER_HOST: "mqtt"
+      MQTT_BROKER_PORT: 1883
+      MQTT_TOPIC: "agent_data_topic"
+      SENSOR_DATA_TOPIC: "sensor_data_topic"
+      SENSOR_READINGS_TOPIC: "sensor_readings_topic"
+      ENABLE_SYNTHETIC_SENSOR_GENERATOR: "true"
+      SENSOR_GENERATOR_INTERVAL_SEC: 2
+      HUB_HOST: "store"
+      HUB_PORT: 8000
+      HUB_MQTT_BROKER_HOST: "mqtt"
+      HUB_MQTT_BROKER_PORT: 1883
+      HUB_MQTT_TOPIC: "processed_agent_data_topic"
+    networks:
+      mqtt_network:
+      edge_hub:
+
+  store:
+    container_name: store
+    build: ../
+    command: ["python", "store_main.py"]
+    depends_on:
+      - postgres_db
+    environment:
+      POSTGRES_USER: "user"
+      POSTGRES_PASSWORD: "pass"
+      POSTGRES_DB: "test_db"
+      POSTGRES_HOST: "postgres_db"
+      POSTGRES_PORT: 5432
+      STORE_PORT: 8000
+    ports:
+      - "8000:8000"
+    networks:
+      db_network:
+      edge_hub:
+
+  hub:
+    container_name: hub
+    build: ../
+    command: ["python", "hub_main.py"]
+    depends_on:
+      - mqtt
+      - store
+    environment:
+      HUB_ENABLED: "true"
+      HUB_MQTT_HOST: "mqtt"
+      HUB_MQTT_PORT: 1883
+      HUB_SENSOR_READINGS_TOPIC: "sensor_readings_topic"
+      HUB_STORE_BATCH_URL: "http://store:8000/sensor_readings/batch"
+      HUB_BATCH_SIZE: 5
+      HUB_BUFFER_BACKEND: "memory"
+    networks:
+      mqtt_network:
+      edge_hub:
+
+
+networks:
+  mqtt_network:
+  db_network:
+  edge_hub:
+  hub:
+  hub_store:
+  hub_redis:
+
+
+volumes:
+  postgres_data:
+  pgadmin-data:
